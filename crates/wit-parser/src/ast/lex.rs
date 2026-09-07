@@ -155,6 +155,7 @@ pub enum Token {
     Package,
     Constructor,
     Async,
+    Out,
 
     Id,
     ExplicitId,
@@ -379,6 +380,7 @@ impl<'a> Tokenizer<'a> {
                     "include" => Include,
                     "with" => With,
                     "async" => Async,
+                    "out" => Out,
                     _ => Id,
                 }
             }
@@ -745,6 +747,7 @@ impl Token {
             Include => "keyword `include`",
             With => "keyword `with`",
             Async => "keyword `async`",
+            Out => "keyword `out`",
             StringLiteral => "a string literal",
         }
     }

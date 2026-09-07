@@ -933,6 +933,7 @@ pub struct Param {
     pub ty: Type,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub span: Span,
+    pub is_out: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1537,6 +1538,7 @@ impl Function {
                 name: "x".to_string(),
                 ty,
                 span: Default::default(),
+                is_out: false,
             });
         }
         let sig = resolve.wasm_signature(AbiVariant::GuestImport, &func_tmp);

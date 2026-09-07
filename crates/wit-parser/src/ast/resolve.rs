@@ -1770,13 +1770,13 @@ impl<'a> Resolver<'a> {
                     name: "self".to_string(),
                     ty: shared,
                     span,
+                    is_out: false,
                 });
             }
         }
-
         match kind.accessor() {
             Some(AccessorKind::Getter) => {
-                if let Some((name, _)) = params.first() {
+                if let Some((name, _, _)) = params.first() {
                     return Err(ParseError::new_syntax(
                         name.span,
                         "getters cannot have parameters".to_owned(),
@@ -1786,7 +1786,7 @@ impl<'a> Resolver<'a> {
             Some(AccessorKind::Setter) => {
                 if params.len() != 1 {
                     return Err(ParseError::new_syntax(
-                        params.get(1).map(|(name, _)| name.span).unwrap_or(span),
+                        params.get(1).map(|(name, _, _)| name.span).unwrap_or(span),
                         "setters must have exactly one parameter".to_owned(),
                     ));
                 }
@@ -1794,7 +1794,7 @@ impl<'a> Resolver<'a> {
             None => {}
         }
 
-        for (name, ty) in params {
+        for (name, ty, is_out) in params {
             if ret
                 .iter()
                 .any(|p| KebabStr::new(&p.name) == KebabStr::new(name.name))
@@ -1808,6 +1808,7 @@ impl<'a> Resolver<'a> {
                 name: name.name.to_string(),
                 ty: self.resolve_type(ty, &Stability::Unknown)?,
                 span: name.span,
+                is_out: *is_out,
             });
         }
         Ok(ret)

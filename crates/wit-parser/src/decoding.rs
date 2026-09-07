@@ -1199,6 +1199,7 @@ impl WitPackageDecoder<'_> {
                     name: name.to_string(),
                     ty: self.convert_valtype(ty)?,
                     span: Default::default(),
+                    is_out: false,
                 })
             })
             .collect::<Result<Vec<_>>>()
