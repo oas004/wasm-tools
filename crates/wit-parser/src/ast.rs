@@ -845,10 +845,11 @@ impl<'a> ResourceFunc<'a> {
                 tokens.expect(Token::Constructor)?;
                 tokens.expect(Token::LeftParen)?;
                 let params = parse_list_trailer(tokens, Token::RightParen, |_docs, tokens| {
+                    let is_out = tokens.eat(Token::Out)?;
                     let name = parse_id(tokens)?;
                     tokens.expect(Token::Colon)?;
                     let ty = Type::parse(tokens)?;
-                    Ok((name, ty))
+                    Ok((name, ty, is_out))
                 })?;
                 let result = if tokens.eat(Token::RArrow)? {
                     let ty = Type::parse(tokens)?;
@@ -993,7 +994,7 @@ struct NamedFunc<'a> {
     func: Func<'a>,
 }
 
-type ParamList<'a> = Vec<(Id<'a>, Type<'a>)>;
+type ParamList<'a> = Vec<(Id<'a>, Type<'a>, bool)>;
 
 struct Func<'a> {
     span: Span,
@@ -1012,10 +1013,11 @@ impl<'a> Func<'a> {
                 tokens.expect(Token::LeftParen)?;
             };
             parse_list_trailer(tokens, Token::RightParen, |_docs, tokens| {
+                let is_out = tokens.eat(Token::Out)?;
                 let name = parse_id(tokens)?;
                 tokens.expect(Token::Colon)?;
                 let ty = Type::parse(tokens)?;
-                Ok((name, ty))
+                Ok((name, ty, is_out))
             })
         }
 

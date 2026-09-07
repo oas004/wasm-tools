@@ -430,6 +430,7 @@ pub fn task_return(
             name: "x".to_string(),
             ty,
             span: Default::default(),
+            is_out: false,
         });
     }
     import(
