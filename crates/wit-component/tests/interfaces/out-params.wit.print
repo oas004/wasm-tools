@@ -1,0 +1,13 @@
+package test:out-params;
+
+interface arithmetic {
+  variant divide-error {
+    divide-by-zero,
+  }
+
+  divide: func(dividend: u32, divisor: u32, out remainder: u32) -> result<u32, divide-error>;
+}
+
+world example {
+  export arithmetic;
+}

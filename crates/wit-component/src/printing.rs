@@ -371,6 +371,10 @@ impl<O: Output> WitPrinter<O> {
             if i > 0 {
                 self.output.str(", ");
             }
+            if param.is_out {
+                self.output.keyword("out");
+                self.output.str(" ");
+            }
             self.print_name_param(&param.name);
             self.output.str(": ");
             self.print_type_name(resolve, &param.ty)?;
