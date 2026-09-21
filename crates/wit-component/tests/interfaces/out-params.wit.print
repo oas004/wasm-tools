@@ -5,9 +5,9 @@ interface arithmetic {
     divide-by-zero,
   }
 
-  divide: func(dividend: u32, divisor: u32, out remainder: u32) -> result<u32, divide-error>;
+  divide: func(dividend: u32, divisor: u32, out remainder: u32) -> result<_, divide-error>;
 }
 
-world example {
-  export arithmetic;
+world calculator {
+  import arithmetic;
 }

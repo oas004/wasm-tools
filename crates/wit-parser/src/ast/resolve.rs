@@ -1770,7 +1770,7 @@ impl<'a> Resolver<'a> {
                     name: "self".to_string(),
                     ty: shared,
                     span,
-                    is_out: false,
+                    mode: ParamMode::In,
                 });
             }
         }
@@ -1794,7 +1794,7 @@ impl<'a> Resolver<'a> {
             None => {}
         }
 
-        for (name, ty, is_out) in params {
+        for (name, ty, mode) in params {
             if ret
                 .iter()
                 .any(|p| KebabStr::new(&p.name) == KebabStr::new(name.name))
@@ -1808,7 +1808,7 @@ impl<'a> Resolver<'a> {
                 name: name.name.to_string(),
                 ty: self.resolve_type(ty, &Stability::Unknown)?,
                 span: name.span,
-                is_out: *is_out,
+                mode: *mode,
             });
         }
         Ok(ret)

@@ -924,6 +924,30 @@ impl Docs {
     }
 }
 
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
+pub enum ParamMode {
+    #[default]
+    In,
+    Out,
+    InOut,
+}
+
+impl ParamMode {
+    pub fn takes_input(self) -> bool {
+        matches!(self, Self::In | Self::InOut)
+    }
+
+    pub fn produces_output(self) -> bool {
+        matches!(self, Self::Out | Self::InOut)
+    }
+
+    pub fn is_in(&self) -> bool {
+        *self == Self::In
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Param {
@@ -933,7 +957,8 @@ pub struct Param {
     pub ty: Type,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub span: Span,
-    pub is_out: bool,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "ParamMode::is_in"))]
+    pub mode: ParamMode,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1538,7 +1563,7 @@ impl Function {
                 name: "x".to_string(),
                 ty,
                 span: Default::default(),
-                is_out: false,
+                mode: ParamMode::In,
             });
         }
         let sig = resolve.wasm_signature(AbiVariant::GuestImport, &func_tmp);
@@ -1734,11 +1759,13 @@ mod test {
                     name: "p1".into(),
                     ty: Type::Id(t1),
                     span: Default::default(),
+                    mode: ParamMode::In,
                 },
                 Param {
                     name: "p2".into(),
                     ty: Type::U32,
                     span: Default::default(),
+                    mode: ParamMode::In,
                 },
             ],
             result: Some(Type::Id(t2)),
