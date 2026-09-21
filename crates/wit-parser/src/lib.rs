@@ -925,7 +925,7 @@ impl Docs {
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, serde_derive::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
 pub enum ParamMode {
     #[default]
