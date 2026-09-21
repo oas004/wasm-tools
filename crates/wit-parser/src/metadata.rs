@@ -15,8 +15,8 @@
 //! format to store this information inline.
 
 use crate::{
-    Docs, Function, IndexMap, InterfaceId, PackageId, Resolve, Stability, TypeDefKind, TypeId,
-    WorldId, WorldItem, WorldKey,
+    Docs, Function, IndexMap, InterfaceId, PackageId, ParamMode, Resolve, Stability, TypeDefKind,
+    TypeId, WorldId, WorldItem, WorldKey,
 };
 use alloc::string::{String, ToString};
 #[cfg(feature = "serde")]
@@ -687,6 +687,12 @@ enum FunctionMetadata {
             serde(default, skip_serializing_if = "Stability::is_unknown")
         )]
         stability: Stability,
+
+        #[cfg_attr(
+            feature = "serde",
+            serde(default, skip_serializing_if = "StringMap::is_empty")
+        )]
+        param_modes: StringMap<ParamMode>,
     },
 }
 
@@ -695,9 +701,16 @@ impl FunctionMetadata {
         if TRY_TO_EMIT_V0_BY_DEFAULT && func.stability.is_unknown() {
             FunctionMetadata::JustDocs(func.docs.contents.clone())
         } else {
+            let param_mode = func
+                .params
+                .iter()
+                .filter(|param| !param.mode.is_in())
+                .map(|param| (param.name.clone(), param.mode))
+                .collect();
             FunctionMetadata::DocsAndStability {
                 docs: func.docs.contents.clone(),
                 stability: func.stability.clone(),
+                param_modes: param_mode,
             }
         }
     }
@@ -707,9 +720,23 @@ impl FunctionMetadata {
             FunctionMetadata::JustDocs(docs) => {
                 func.docs.contents = docs.clone();
             }
-            FunctionMetadata::DocsAndStability { docs, stability } => {
+            FunctionMetadata::DocsAndStability {
+                docs,
+                stability,
+                param_modes,
+            } => {
                 func.docs.contents = docs.clone();
                 func.stability = stability.clone();
+
+                for (name, mode) in param_modes {
+                    let param = func
+                        .params
+                        .iter_mut()
+                        .find(|param| param.name == *name)
+                        .ok_or_else(|| anyhow::anyhow!("missing parameter {name:?}"))?;
+
+                    param.mode = *mode;
+                }
             }
         }
         Ok(())
@@ -718,9 +745,11 @@ impl FunctionMetadata {
     fn is_empty(&self) -> bool {
         match self {
             FunctionMetadata::JustDocs(docs) => docs.is_none(),
-            FunctionMetadata::DocsAndStability { docs, stability } => {
-                docs.is_none() && stability.is_unknown()
-            }
+            FunctionMetadata::DocsAndStability {
+                docs,
+                stability,
+                param_modes,
+            } => docs.is_none() && stability.is_unknown() && param_modes.is_empty(),
         }
     }
 
