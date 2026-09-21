@@ -41,7 +41,8 @@ type StringMap<V> = IndexMap<String, V>;
 /// * [2024/04/19] 1 - extensions were added for item stability and
 ///   additionally having world imports/exports have the same name.
 #[cfg(feature = "serde")]
-const PACKAGE_DOCS_SECTION_VERSION: u8 = 1;
+const PACKAGE_DOCS_SECTION_VERSION: u8 = 2;
+const PACKAGE_DOCS_SECTION_VERSION_V1: u8 = 1;
 
 /// At this time the v1 format was just written. For compatibility with older
 /// tools we'll still try to emit the v0 format by default, if the input is
@@ -97,6 +98,14 @@ impl PackageMetadata {
         }
     }
 
+    pub fn has_param_modes(&self) -> bool {
+        self.worlds.values().any(WorldMetadata::has_param_modes)
+            || self
+                .interfaces
+                .values()
+                .any(InterfaceMetadata::has_param_modes)
+    }
+
     /// Inject package docs for the given package.
     ///
     /// This will override any existing docs in the [`Resolve`].
@@ -128,13 +137,16 @@ impl PackageMetadata {
         // that's preferred to keep older tools working at this time.
         // Eventually this branch will be removed and v1 will unconditionally
         // be used.
-        let mut data = vec![
-            if TRY_TO_EMIT_V0_BY_DEFAULT && self.is_compatible_with_v0() {
-                0
-            } else {
-                PACKAGE_DOCS_SECTION_VERSION
-            },
-        ];
+
+        let version = if TRY_TO_EMIT_V0_BY_DEFAULT && self.is_compatible_with_v0() {
+            0
+        } else if self.has_param_modes() {
+            PACKAGE_DOCS_SECTION_VERSION
+        } else {
+            PACKAGE_DOCS_SECTION_VERSION_V1
+        };
+
+        let mut data = vec![version];
         serde_json::to_writer(&mut data, self)?;
         Ok(data)
     }
@@ -145,7 +157,9 @@ impl PackageMetadata {
         match data.first().copied() {
             // Our serde structures transparently support v0 and the current
             // version, so allow either here.
-            Some(0) | Some(PACKAGE_DOCS_SECTION_VERSION) => {}
+            Some(0)
+            | Some(PACKAGE_DOCS_SECTION_VERSION_V1)
+            | Some(PACKAGE_DOCS_SECTION_VERSION) => {}
             version => {
                 bail!(
                     "expected package-docs version {PACKAGE_DOCS_SECTION_VERSION}, got {version:?}"
@@ -408,6 +422,18 @@ impl WorldMetadata {
         }
     }
 
+    fn has_param_modes(&self) -> bool {
+        self.func_imports_or_exports
+            .values()
+            .chain(self.func_exports.values())
+            .any(FunctionMetadata::has_param_modes)
+            || self
+                .interface_imports_or_exports
+                .values()
+                .chain(self.interface_exports.values())
+                .any(InterfaceMetadata::has_param_modes)
+    }
+
     fn inject(&self, resolve: &mut Resolve, id: WorldId) -> Result<()> {
         // Inject docs/stability for all kebab-named interfaces, both imports
         // and exports.
@@ -627,6 +653,10 @@ impl InterfaceMetadata {
         }
     }
 
+    fn has_param_modes(&self) -> bool {
+        self.funcs.values().any(FunctionMetadata::has_param_modes)
+    }
+
     fn inject(&self, resolve: &mut Resolve, id: InterfaceId) -> Result<()> {
         for (name, data) in &self.types {
             let Some(&id) = resolve.interfaces[id].types.get(name) else {
@@ -713,6 +743,10 @@ impl FunctionMetadata {
                 param_modes: param_mode,
             }
         }
+    }
+
+    fn has_param_modes(&self) -> bool {
+        matches!(self, FunctionMetadata::DocsAndStability { docs, stability, param_modes } if !param_modes.is_empty())
     }
 
     fn inject(&self, func: &mut Function) -> Result<()> {

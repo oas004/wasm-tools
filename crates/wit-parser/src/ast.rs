@@ -1033,6 +1033,8 @@ impl<'a> Func<'a> {
             parse_list_trailer(tokens, Token::RightParen, |_docs, tokens| {
                 let mode = if tokens.eat(Token::Out)? {
                     ParamMode::Out
+                } else if tokens.eat(Token::In)? {
+                    ParamMode::In
                 } else if tokens.eat(Token::InOut)? {
                     ParamMode::InOut
                 } else {

@@ -5,7 +5,7 @@
         (instance
           (type (;0;) (variant (case "divide-by-zero")))
           (export (;1;) "divide-error" (type (eq 0)))
-          (type (;2;) (result u32 (error 1)))
+          (type (;2;) (result (error 1)))
           (type (;3;) (func (param "dividend" u32) (param "divisor" u32) (param "remainder" u32) (result 2)))
           (export (;0;) "divide" (func (type 3)))
         )
@@ -14,7 +14,27 @@
     )
   )
   (export (;1;) "arithmetic" (type 0))
-  (@custom "package-docs" "\01{}")
+  (type (;2;)
+    (component
+      (type (;0;)
+        (component
+          (type (;0;)
+            (instance
+              (type (;0;) (variant (case "divide-by-zero")))
+              (export (;1;) "divide-error" (type (eq 0)))
+              (type (;2;) (result (error 1)))
+              (type (;3;) (func (param "dividend" u32) (param "divisor" u32) (param "remainder" u32) (result 2)))
+              (export (;0;) "divide" (func (type 3)))
+            )
+          )
+          (import "test:out-params/arithmetic" (instance (;0;) (type 0)))
+        )
+      )
+      (export (;0;) "test:out-params/calculator" (component (type 0)))
+    )
+  )
+  (export (;3;) "calculator" (type 2))
+  (@custom "package-docs" "\02{\22interfaces\22:{\22arithmetic\22:{\22funcs\22:{\22divide\22:{\22param_modes\22:{\22remainder\22:\22out\22}}}}}}")
   (@producers
     (processed-by "wit-component" "$CARGO_PKG_VERSION")
   )

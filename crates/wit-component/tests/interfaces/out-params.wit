@@ -6,8 +6,8 @@ interface arithmetic {
   }
 
   divide: func(
-    dividend: u32,
-    divisor: u32,
+    in dividend: u32,
+    in divisor: u32,
     out remainder: u32,
   ) -> result<_, divide-error>;
 }
