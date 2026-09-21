@@ -156,6 +156,8 @@ pub enum Token {
     Constructor,
     Async,
     Out,
+    In,
+    InOut,
 
     Id,
     ExplicitId,
@@ -381,6 +383,8 @@ impl<'a> Tokenizer<'a> {
                     "with" => With,
                     "async" => Async,
                     "out" => Out,
+                    "in" => In,
+                    "inout" => InOut,
                     _ => Id,
                 }
             }
@@ -748,6 +752,8 @@ impl Token {
             With => "keyword `with`",
             Async => "keyword `async`",
             Out => "keyword `out`",
+            In => "keyword `in`",
+            InOut => "keyword `inout`",
             StringLiteral => "a string literal",
         }
     }

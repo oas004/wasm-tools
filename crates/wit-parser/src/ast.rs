@@ -1,5 +1,5 @@
 use crate::ast::error::ParseError;
-use crate::{ParseResult, UnresolvedPackage, UnresolvedPackageGroup};
+use crate::{ParamMode, ParseResult, UnresolvedPackage, UnresolvedPackageGroup};
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
 use alloc::format;
@@ -845,11 +845,20 @@ impl<'a> ResourceFunc<'a> {
                 tokens.expect(Token::Constructor)?;
                 tokens.expect(Token::LeftParen)?;
                 let params = parse_list_trailer(tokens, Token::RightParen, |_docs, tokens| {
-                    let is_out = tokens.eat(Token::Out)?;
+                    let mode = if tokens.eat(Token::Out)? {
+                        ParamMode::Out
+                    } else if tokens.eat(Token::In)? {
+                        ParamMode::In
+                    } else if tokens.eat(Token::InOut)? {
+                        ParamMode::InOut
+                    } else {
+                        ParamMode::In
+                    };
+
                     let name = parse_id(tokens)?;
                     tokens.expect(Token::Colon)?;
                     let ty = Type::parse(tokens)?;
-                    Ok((name, ty, is_out))
+                    Ok((name, ty, mode))
                 })?;
                 let result = if tokens.eat(Token::RArrow)? {
                     let ty = Type::parse(tokens)?;
@@ -994,7 +1003,7 @@ struct NamedFunc<'a> {
     func: Func<'a>,
 }
 
-type ParamList<'a> = Vec<(Id<'a>, Type<'a>, bool)>;
+type ParamList<'a> = Vec<(Id<'a>, Type<'a>, ParamMode)>;
 
 struct Func<'a> {
     span: Span,
@@ -1013,11 +1022,18 @@ impl<'a> Func<'a> {
                 tokens.expect(Token::LeftParen)?;
             };
             parse_list_trailer(tokens, Token::RightParen, |_docs, tokens| {
-                let is_out = tokens.eat(Token::Out)?;
+                let mode = if tokens.eat(Token::Out)? {
+                    ParamMode::Out
+                } else if tokens.eat(Token::InOut)? {
+                    ParamMode::InOut
+                } else {
+                    ParamMode::In
+                };
+
                 let name = parse_id(tokens)?;
                 tokens.expect(Token::Colon)?;
                 let ty = Type::parse(tokens)?;
-                Ok((name, ty, is_out))
+                Ok((name, ty, mode))
             })
         }
 

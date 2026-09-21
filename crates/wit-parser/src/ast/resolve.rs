@@ -1721,11 +1721,11 @@ impl<'a> Resolver<'a> {
                     name: "self".to_string(),
                     ty: shared,
                     span,
-                    is_out: false,
+                    mode: ParamMode::In,
                 });
             }
         }
-        for (name, ty, is_out) in params {
+        for (name, ty, mode) in params {
             if ret.iter().any(|p| p.name == name.name) {
                 return Err(ParseError::new_syntax(
                     name.span,
@@ -1736,7 +1736,7 @@ impl<'a> Resolver<'a> {
                 name: name.name.to_string(),
                 ty: self.resolve_type(ty, &Stability::Unknown)?,
                 span: name.span,
-                is_out: *is_out,
+                mode: *mode,
             });
         }
         Ok(ret)

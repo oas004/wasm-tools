@@ -371,10 +371,18 @@ impl<O: Output> WitPrinter<O> {
             if i > 0 {
                 self.output.str(", ");
             }
-            if param.is_out {
-                self.output.keyword("out");
-                self.output.str(" ");
+            match param.mode {
+                ParamMode::In => {} // TO avoid changing all print functions
+                ParamMode::Out => {
+                    self.output.keyword("out");
+                    self.output.str(" ");
+                }
+                ParamMode::InOut => {
+                    self.output.keyword("inout");
+                    self.output.str(" ");
+                }
             }
+
             self.print_name_param(&param.name);
             self.output.str(": ");
             self.print_type_name(resolve, &param.ty)?;
